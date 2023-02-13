@@ -1,18 +1,14 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/gorilla/mux"
 	"github.com/slovojoe/docupToo/constants"
 	"github.com/slovojoe/docupToo/database"
 	"github.com/slovojoe/docupToo/models"
 	"github.com/slovojoe/docupToo/routers"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
 )
 
 //Adding dummy user and document data
@@ -27,23 +23,13 @@ var(
 
 
 
-//Loop through the specified routes
-func AddRoutes(router *mux.Router) *mux.Router {
-	for _, route := range routers.Routes {
-		router.
-			Methods(route.Method).
-			Path(route.Pattern).
-			Name(route.Name).
-			Handler(route.HandlerFunc)
-	}
-	return router
-}
+
 
 func main() {
 	database.ConnectDB()
 
 	muxRouter := mux.NewRouter().StrictSlash(true)
-	router := AddRoutes(muxRouter)
+	router := routers.AddRoutes(muxRouter)
 	err := http.ListenAndServe(constants.CONN_HOST+":"+constants.CONN_PORT, router)
 	if err != nil {
 		log.Fatal("error starting http server :: ", err)
@@ -52,7 +38,7 @@ func main() {
 
 
 
-    for i := range documents{db.Create(&documents[i])}
-	for i := range users{db.Create(&users[i])}
+    for i := range documents{database.Db.Create(&documents[i])}
+	for i := range users{database.Db.Create(&users[i])}
 
 }

@@ -1,11 +1,11 @@
-package handlers
+ package handlers
 
-import "gorm.io/gorm"
+// import "gorm.io/gorm"
 
-type handler struct{
-	DB *gorm.DB
-}
+// type handler struct{
+// 	DB *gorm.DB
+// }
 
-func New(db *gorm.DB)handler{
-	return handler{db}
-}
+// func New(db *gorm.DB)handler{
+// 	return handler{db}
+// }
