@@ -41,7 +41,7 @@ func GetUser(w http.ResponseWriter, r *http.Request) {
 	var singleUser User
 
 	//Get the first user whose ID matches the provided ID
-	//database.Db.First(&singleUser, key)
+	
 	if result := database.Db.First(&singleUser, key); result.Error != nil {
 		fmt.Println(result.Error)
 	}

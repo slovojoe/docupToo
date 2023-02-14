@@ -62,14 +62,18 @@ var Routes = []Route{
 		
 	},
 
-	//Documents
 
-	// {Name: "getDoc",
-	// 	Method:  "GET",
-	// 	Pattern: "/doc/{id}",
 
-	// 	HandlerFunc: getDoc,
-	// },
+	{
+		Name: "getDoc",
+		Method:  "GET",
+		Pattern: "/documents/{id}/{user_id}",
+		
+
+		HandlerFunc: handlers.GetSingleDoc,
+	},
+
+
 	// {
 	// 	Name:        "getDocuments",
 	// 	Method:      "GET",
@@ -79,7 +83,7 @@ var Routes = []Route{
 	{
 		Name:        "createDocument",
 		Method:      "POST",
-		Pattern:     "/document/create",
+		Pattern:     "/documents/create",
         HandlerFunc: handlers.CreateDocument,
 		
 	},

@@ -33,6 +33,24 @@ func CreateDocument(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(document)
 }
 
+func GetSingleDoc(w http.ResponseWriter, r *http.Request){
+	vars := mux.Vars(r)
+	userIdKey := vars["user_id"]
+	docIdKey := vars["id"]
+
+	var userdocuments Document
+	result :=database.Db.Where("id = ? AND user_id = ?", docIdKey, userIdKey).Find(&userdocuments)
+
+	//Get a single document based on provided user id
+	// SELECT * FROM userdocuments WHERE id = docIdKey AND user_id =userIdKey;
+	if  result.Error != nil {
+		fmt.Println(result.Error)
+	}
+	
+	json.NewEncoder(w).Encode(userdocuments)
+	fmt.Printf("SUCCESS: Got document %s", userdocuments)
+}
+
 // Update document by id
 func UpdateDocument(w http.ResponseWriter, r *http.Request) {
 
