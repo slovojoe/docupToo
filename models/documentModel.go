@@ -6,6 +6,7 @@ type Document struct{
     gorm.Model 
 
     Name string
-    Body string
+    URL string
+    FileKey string
     UserID int
 }

@@ -8,7 +8,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/slovojoe/docupToo/database"
+	"github.com/slovojoe/docupToo/storage"
 	"github.com/slovojoe/docupToo/models"
 )
 
@@ -27,7 +27,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println(unmarshalled)
 
-	if result := database.Db.Create(&user); result.Error != nil {
+	if result := storage.Db.Create(&user); result.Error != nil {
 		fmt.Println(result.Error)
 	}
 	json.NewEncoder(w).Encode(user)
@@ -42,7 +42,7 @@ func GetUser(w http.ResponseWriter, r *http.Request) {
 
 	//Get the first user whose ID matches the provided ID
 	
-	if result := database.Db.First(&singleUser, key); result.Error != nil {
+	if result := storage.Db.First(&singleUser, key); result.Error != nil {
 		fmt.Println(result.Error)
 	}
 
@@ -58,7 +58,7 @@ func GetUsersDocs(w http.ResponseWriter, r *http.Request) {
 	key := vars["userid"]
 
 	//Passing the key parameters at .Find(&users,key) is the equivalent of SELECT * FROM users WHERE id = key;
-	if results := database.Db.Preload("Documents").Find(&users, key); results.Error != nil {
+	if results := storage.Db.Preload("Documents").Find(&users, key); results.Error != nil {
 		fmt.Println(results.Error)
 	}
 
@@ -77,7 +77,7 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 	var user User
 	vars := mux.Vars(r)
 	id := vars["userid"]
-	result := database.Db.First(&user, id)
+	result := storage.Db.First(&user, id)
 
 	//check if there is an error getting the user
 	if result.Error != nil {
@@ -90,7 +90,7 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 	if userToUpdate.Username != "" {
 
 		oldUser := user.Username
-		database.Db.Save(&user)
+		storage.Db.Save(&user)
 		fmt.Printf("Changed username from %s to %s/n", oldUser, userToUpdate.Username)
 	}
 
@@ -113,14 +113,14 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 	id := vars["userid"]
 	var usertodelete User
 	//Such the users table for a user whose ID is same as the one we specify
-	result := database.Db.First(&usertodelete, id)
+	result := storage.Db.First(&usertodelete, id)
 
 	if result.Error != nil {
 		fmt.Println(result.Error)
 
 	}
 	fmt.Printf("deleting user %s/n", usertodelete.Username)
-	database.Db.Delete(&usertodelete)
+	storage.Db.Delete(&usertodelete)
 	fmt.Println("User deleted successfully")
 
 	json.NewEncoder(w).Encode(usertodelete)

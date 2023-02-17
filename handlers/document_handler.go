@@ -1,33 +1,68 @@
 package handlers
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
+	
 
+	//"path/filepath"
+
+	//"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/gorilla/mux"
-	"github.com/slovojoe/docupToo/database"
 	"github.com/slovojoe/docupToo/models"
+	"github.com/slovojoe/docupToo/storage"
 )
 
 // Define handlers
 type Document models.Document
 
+type UserFile struct{
+	FileName string
+	Base64File string
+	UserID int
+}
 var Documents []models.Document
+const MAX_UPLOAD_SIZE = 10240 * 10240 // 10MB
 
-// Creating a new document
-func CreateDocument(w http.ResponseWriter, r *http.Request) {
+//Creating a new document
+func CreateDocument(w http.ResponseWriter, r *http.Request, ) {
 	// get the body of the  POST request
 	// unmarshal this into a new Document struct
-	// append this to the Documents array.
+	//receive client request body containing file details
+	//Base64 file, filename, 
 	reqBody, _ := ioutil.ReadAll(r.Body)
-	var document models.Document
-	unmarshalled := json.Unmarshal(reqBody, &document)
-
+	var userFile UserFile
+	unmarshalled := json.Unmarshal(reqBody, &userFile)
 	fmt.Println(unmarshalled)
 
-	if result := database.Db.Create(&document); result.Error != nil {
+	// decode the base64 image
+	base64Image := userFile.Base64File
+	imageData, err := base64.StdEncoding.DecodeString(base64Image)
+	if err != nil {
+		log.Fatal("An error occured decoding the image %s",err)
+		return
+	}
+
+	// Determine the content type of the received  file
+	mimeType := http.DetectContentType(imageData)
+	fmt.Printf("file type is %s\n",mimeType)
+
+
+	//Call the upload function to upload file to s3
+	key := fmt.Sprintf("images/%s", userFile.FileName)
+	fmt.Printf("object key is %s\n",key)
+	//The upload function returns a url to the file which we will store in the db
+	fileurl:=storage.UploadImage(storage.Sess,imageData,key,mimeType)
+
+	//Create a document using details from user file
+	document:= models.Document{Name: userFile.FileName,UserID: userFile.UserID, URL: fileurl,FileKey: key}
+    
+	//Store the document in the database
+	if result := storage.Db.Create(&document); result.Error != nil {
 		fmt.Println(result.Error)
 	}
 	json.NewEncoder(w).Encode(document)
@@ -39,7 +74,7 @@ func GetSingleDoc(w http.ResponseWriter, r *http.Request){
 	docIdKey := vars["id"]
 
 	var userdocuments Document
-	result :=database.Db.Where("id = ? AND user_id = ?", docIdKey, userIdKey).Find(&userdocuments)
+	result :=storage.Db.Where("id = ? AND user_id = ?", docIdKey, userIdKey).Find(&userdocuments)
 
 	//Get a single document based on provided user id
 	// SELECT * FROM userdocuments WHERE id = docIdKey AND user_id =userIdKey;
@@ -61,7 +96,7 @@ func UpdateDocument(w http.ResponseWriter, r *http.Request) {
 	var doc Document
 	vars := mux.Vars(r)
 	id := vars["docid"]
-	result := database.Db.First(&doc, id)
+	result := storage.Db.First(&doc, id)
 
 	//check if there is an error getting the document
 	if result.Error != nil {
@@ -74,7 +109,7 @@ func UpdateDocument(w http.ResponseWriter, r *http.Request) {
 	if docToUpdate.Name != "" {
 
 		oldDoc := doc.Name
-		database.Db.Save(&doc)
+		storage.Db.Save(&doc)
 		fmt.Printf("Changed document name from %s to %s/n", oldDoc, docToUpdate.Name)
 	}
 
@@ -98,14 +133,14 @@ func DeleteDocument(w http.ResponseWriter, r *http.Request) {
 	id := vars["docid"]
 	var documentToDelete Document
 	//Search the documents table for a document whose ID is same as the one we specify
-	result := database.Db.First(&documentToDelete, id)
+	result := storage.Db.First(&documentToDelete, id)
 
 	if result.Error != nil {
 		fmt.Println(result.Error)
 
 	}
 	fmt.Printf("deleting document %s/n", documentToDelete.Name)
-	database.Db.Delete(&documentToDelete)
+	storage.Db.Delete(&documentToDelete)
 	fmt.Println("Document deleted successfully")
 
 	json.NewEncoder(w).Encode(documentToDelete)
